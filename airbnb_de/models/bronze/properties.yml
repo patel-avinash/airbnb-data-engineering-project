@@ -1,0 +1,13 @@
+# in case of specific requirements for the models, you can define them here. For example, if you want to materialize all models in this directory as tables, you can do so by uncommenting the following line:
+models :
+    - name: bronze_bookings
+      config :
+        materialized: table
+
+    - name: bronze_hosts
+      config :
+        materialized: table
+
+    - name: bronze_listings
+      config :
+        materialized: table
