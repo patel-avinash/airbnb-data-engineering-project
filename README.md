@@ -1,229 +1,232 @@
 # Airbnb End-to-End Data Engineering Project
 
-An end-to-end data engineering project built using **Snowflake, dbt, and
-SQL** to transform Airbnb source data into analytics-ready datasets.
+An end-to-end data engineering project using **Azure Blob Storage, Snowflake, dbt, and SQL** to move Airbnb source data from cloud storage into a Snowflake data warehouse and transform it into analytics-ready datasets.
 
 ## 📌 Project Overview
 
-This project demonstrates a modern ELT-based data engineering workflow:
+The project follows this data flow:
 
-**Source Data → Bronze → Silver → Gold → Analytics**
+**Airbnb CSV Files → Azure Blob Storage → Snowflake External Stage → Bronze → Silver → Gold → Analytics-ready Data**
 
-The project focuses on data ingestion, transformation, data modeling,
-testing, snapshots, reusable dbt macros, and Snowflake-based analytics
-engineering.
+Azure Blob Storage is used as the raw file landing area, while Snowflake is used as the cloud data warehouse. dbt is used for transformations and data modeling.
 
 ## 🏗️ Architecture
 
-``` text
-Airbnb Source Data
-        │
-        ▼
-   Snowflake
-        │
-        ▼
-     Bronze
-        │
-        ▼
-     Silver
-        │
-        ▼
-      Gold
-        │
-        ├── Fact Tables
-        ├── Dimension Tables
-        └── Ephemeral Models
-        │
-        ▼
- Analytics-Ready Data
+```text
+Airbnb CSV Files
+       │
+       ▼
+Azure Blob Storage
+       │
+       │ Azure RBAC / Service Principal
+       ▼
+Snowflake Storage Integration
+       │
+       ▼
+External Stage
+       │
+       ├── bookings.csv
+       ├── hosts.csv
+       └── listings.csv
+       │
+       ▼
+Snowflake
+       │
+       ├── Bronze
+       ├── Silver
+       └── Gold
+              │
+              ├── Fact Models
+              ├── Dimension Models
+              └── Ephemeral Models
+              │
+              ▼
+       Analytics-ready Data
 ```
 
 ## 🛠️ Tech Stack
 
--   **Cloud Data Warehouse:** Snowflake
--   **Transformation:** dbt
--   **Programming / Query Language:** SQL
--   **Version Control:** Git & GitHub
--   **Data Modeling:** Dimensional Modeling
--   **ELT:** Snowflake + dbt
+- **Cloud Storage:** Azure Blob Storage
+- **Cloud Data Warehouse:** Snowflake
+- **Transformation:** dbt
+- **Query Language:** SQL
+- **Data Modeling:** Dimensional Modeling
+- **Version Control:** Git & GitHub
+- **ELT:** Azure Blob Storage + Snowflake + dbt
 
-## 📂 Project Structure
+## ☁️ Azure Blob Storage → Snowflake
 
-``` text
-Airbnb/
-│
-├── airbnb_de/
-│   ├── analyses/
-│   ├── macros/
-│   ├── models/
-│   │   ├── bronze/
-│   │   ├── silver/
-│   │   ├── gold/
-│   │   │   └── ephemeral/
-│   │   └── sources/
-│   ├── seeds/
-│   ├── snapshots/
-│   ├── tests/
-│   └── dbt_project.yml
-│
-├── src/
-├── README.md
-├── pyproject.toml
-├── uv.lock
-└── .gitignore
+The raw Airbnb CSV files are stored in an Azure Blob Storage container.
+
+The project uses:
+
+- Azure Storage Account
+- Azure Blob Container
+- Microsoft Entra ID
+- Azure RBAC
+- Snowflake Storage Integration
+- Snowflake External Stage
+
+The Snowflake application is granted the required **Storage Blob Data Contributor** role so Snowflake can access the Azure container.
+
+The external stage provides Snowflake with a named reference to the Azure storage location.
+
+## 📂 Source Data
+
+The project uses three Airbnb CSV files:
+
+- `bookings.csv`
+- `hosts.csv`
+- `listings.csv`
+
+The files are stored in the Azure Blob container and accessed from Snowflake through the external stage.
+
+## ❄️ Snowflake Setup
+
+The Snowflake side includes:
+
+- Database
+- Staging schema
+- Target tables
+- CSV file format
+- Azure Storage Integration
+- External Stage
+
+Example verification:
+
+```sql
+LIST @airbnb_stage;
 ```
+
+This verifies that Snowflake can authenticate to Azure and discover the source files.
 
 ## 🔄 Data Transformation Layers
 
 ### Bronze Layer
 
-The Bronze layer contains the initial transformation of the source
-Airbnb datasets and provides the foundation for downstream processing.
+The Bronze layer performs the initial transformation of the Airbnb source data and provides the foundation for downstream processing.
 
 ### Silver Layer
 
-The Silver layer applies further cleaning and transformation to prepare
-the data for business-oriented modeling.
+The Silver layer applies further cleaning and transformation to prepare the data for business-oriented modeling.
 
 ### Gold Layer
 
-The Gold layer contains analytics-ready models, including fact and
-dimension structures used for analysis.
+The Gold layer contains analytics-ready models, including fact and dimension structures.
 
 ## 📊 Data Modeling
 
-The project uses dimensional modeling concepts to organize the
-transformed Airbnb data into analytical structures.
+The Gold layer uses dimensional modeling concepts and contains analytical fact and dimension structures for Airbnb data.
 
-The Gold layer includes:
-
--   Fact model
--   Host-related dimension model
--   Listing-related dimension model
--   Booking-related dimension model
--   Ephemeral models used as intermediate transformations
+The project also uses ephemeral dbt models as intermediate transformations.
 
 ## 🧩 dbt Features Used
 
--   dbt Models
--   `source()` and source definitions
--   Model dependencies
--   Materializations
--   Jinja
--   Custom macros
--   Generic/data tests
--   Snapshots
--   Incremental transformation concepts
--   Model documentation/configuration
-
-## ❄️ Snowflake
-
-Snowflake is used as the cloud data warehouse for storing and
-transforming the Airbnb datasets.
-
-The project applies Snowflake as the execution platform for the dbt
-transformation workflow.
+- dbt Models
+- `source()` and source definitions
+- Model dependencies
+- Materializations
+- Jinja
+- Custom macros
+- dbt tests
+- Snapshots
+- Incremental transformation concepts
+- Model configuration
+- Git-based development
 
 ## 🧪 Data Quality
 
-Data quality checks are implemented through dbt tests and SQL-based
-validation.
+Data quality checks are implemented through dbt tests and SQL-based validation.
 
-The project includes source-level tests and model configuration to help
-validate the transformed datasets.
+Source-level tests and model configuration are used to validate the transformed datasets.
 
-## 📈 Project Workflow
+## 🔄 Project Workflow
 
-1.  Load Airbnb source data into Snowflake.
-2.  Define source datasets in dbt.
-3.  Build Bronze models.
-4.  Transform Bronze data into Silver models.
-5.  Build Gold analytical models.
-6.  Apply dimensional modeling.
-7.  Add tests and snapshots.
-8.  Use reusable dbt macros for transformations.
-9.  Validate the final analytics-ready datasets.
+1. Store Airbnb CSV files in Azure Blob Storage.
+2. Configure Azure identity and RBAC permissions.
+3. Create Snowflake database, schema, tables, and CSV file format.
+4. Configure a Snowflake Storage Integration for Azure.
+5. Create an external stage pointing to the Azure Blob container.
+6. Verify source files using `LIST @airbnb_stage`.
+7. Load and transform the source data in Snowflake.
+8. Build Bronze, Silver, and Gold dbt models.
+9. Apply dimensional modeling.
+10. Add tests, snapshots, macros, and incremental transformations.
+11. Produce analytics-ready datasets.
 
 ## 🔐 Configuration
 
-Snowflake connection credentials are intentionally kept outside the
-public repository.
+Snowflake connection credentials are intentionally kept outside the public repository.
 
-Configure your local dbt profile separately in `profiles.yml`.
+Create and configure your local dbt `profiles.yml` separately.
 
-> Never commit passwords, access tokens, private keys, or other
-> credentials to GitHub.
+> Never commit passwords, access tokens, private keys, or other credentials to GitHub.
 
 ## 🚀 How to Run
 
 ### 1. Clone the repository
 
-``` bash
+```bash
 git clone https://github.com/patel-avinash/Airbnb.git
 cd Airbnb
 ```
 
-### 2. Set up the Python environment
+### 2. Configure dbt
 
-Create/activate your Python environment according to the project's
-Python configuration.
+Create your local `profiles.yml` with the required Snowflake connection details.
 
-### 3. Configure dbt
+### 3. Install dbt dependencies
 
-Create your local dbt `profiles.yml` with your Snowflake connection
-details.
-
-### 4. Install dbt dependencies
-
-``` bash
+```bash
 dbt deps
 ```
 
-### 5. Check the dbt project
+### 4. Check the connection
 
-``` bash
+```bash
 dbt debug
 ```
 
-### 6. Run the models
+### 5. Run the models
 
-``` bash
+```bash
 dbt run
 ```
 
-### 7. Run data quality tests
+### 6. Run tests
 
-``` bash
+```bash
 dbt test
 ```
 
 ## 📚 Key Concepts Demonstrated
 
--   Modern ELT architecture
--   Cloud data warehousing
--   Snowflake
--   dbt transformation
--   Bronze/Silver/Gold architecture
--   Dimensional modeling
--   Fact and dimension tables
--   Data quality testing
--   Snapshots
--   Incremental processing
--   Reusable SQL/Jinja macros
--   Git-based project development
+- Azure Blob Storage
+- Azure Entra ID and RBAC
+- Snowflake Storage Integration
+- Snowflake External Stage
+- Cloud data ingestion
+- ELT architecture
+- Bronze/Silver/Gold architecture
+- Dimensional modeling
+- Fact and dimension tables
+- dbt transformations
+- Data quality testing
+- Snapshots
+- Incremental processing
+- Reusable SQL/Jinja macros
+- Git-based project development
 
 ## 👨‍💻 Author
 
 **Avinash J. Patel**
 
-B.E. Computer Engineering\
+B.E. Computer Engineering  
 L. J. University, Ahmedabad
 
--   GitHub: [patel-avinash](https://github.com/patel-avinash)
--   LinkedIn: Avinash J Patel
+- GitHub: https://github.com/patel-avinash
+- LinkedIn: Avinash J Patel
 
 ## ⭐ Project Purpose
 
-This project was developed to gain practical experience in designing and
-implementing an end-to-end data engineering pipeline using modern cloud
-data engineering technologies.
+This project was developed to gain practical experience in building an end-to-end cloud data engineering pipeline using Azure Blob Storage, Snowflake, dbt, SQL, and dimensional modeling.
